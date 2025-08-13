@@ -1,0 +1,40 @@
+﻿@inherits LayoutComponentBase
+
+<BlazorBootstrapLayout StickyHeader="true">
+    <SidebarSection>
+        <Sidebar2 Href="/"
+                  IconName="IconName.Tools"
+                  Title="MNS81 Utils"
+                  BadgeText="1.0"
+                  DataProvider="Sidebar2DataProvider"
+                  WidthUnit="Unit.Px" />
+    </SidebarSection>
+    <ContentSection>
+        @Body
+    </ContentSection>
+</BlazorBootstrapLayout>
+
+@code {
+    private IEnumerable<NavItem> navItems = default!;
+
+    private async Task<Sidebar2DataProviderResult> Sidebar2DataProvider(Sidebar2DataProviderRequest request)
+    {
+        if (navItems is null)
+            navItems = GetNavItems();
+
+        var filtered = navItems.Where(x => x.Id != "1");
+        return await Task.FromResult(request.ApplyTo(filtered));
+    }
+
+    private IEnumerable<NavItem> GetNavItems()
+    {
+        navItems = new List<NavItem>
+        {
+            new NavItem { Id = "1", Href = "/", IconName = IconName.InfoCircle, Text = "About", Match=NavLinkMatch.All},
+            new NavItem { Id = "2", Href = "/wordlehelper", IconName = IconName.AlphabetUppercase, Text = "Wordle Helper"},
+            new NavItem { Id = "3", Href = "/trueprice", IconName = IconName.Cart4, Text = "True Price"},            
+        };
+
+        return navItems;
+    }
+}

@@ -1,0 +1,97 @@
+﻿@page "/wordlehelper"
+
+<style>
+    .custom-input {
+        font-size: 24px; /* размер шрифта */
+        font-weight: bold; /* жирность */
+        text-transform: uppercase; /* Заглавные */
+    }
+</style>
+
+<Modal @ref="modal" Title="Подходящие слова">
+    <BodyTemplate>
+        @result
+    </BodyTemplate>
+</Modal>
+
+<h1 style="text-align:center">Wordle Helper</h1>
+<br />
+<h6 style="text-align:center">Буквы на своих местах</h6>
+<table style="margin: 0 auto">
+    <tr>
+        <td><TextInput @bind-Value="@char1" TextAlignment="Alignment.Center" Placeholder="*" MaxLength="1" class="form-control custom-input" /></td>
+        <td><TextInput @bind-Value="@char2" TextAlignment="Alignment.Center" Placeholder="*" MaxLength="1" class="form-control custom-input" /></td>
+        <td><TextInput @bind-Value="@char3" TextAlignment="Alignment.Center" Placeholder="*" MaxLength="1" class="form-control custom-input" /></td>
+        <td><TextInput @bind-Value="@char4" TextAlignment="Alignment.Center" Placeholder="*" MaxLength="1" class="form-control custom-input" /></td>
+        <td><TextInput @bind-Value="@char5" TextAlignment="Alignment.Center" Placeholder="*" MaxLength="1" class="form-control custom-input" /></td>
+    </tr>
+</table>
+<br />
+<h6 style="text-align:center">Буквы, которые есть в слове</h6>
+<TextInput @bind-Value="@usedChars" TextAlignment="Alignment.Center" class="form-control custom-input" />
+<br />
+<h6 style="text-align:center">Буквы, которых нет в слове</h6>
+<TextInput @bind-Value="@unUsedChars" TextAlignment="Alignment.Center" class="form-control custom-input" />
+<br />
+
+<div class="row md-3">
+    <div class="col-sm-3 d-grid" style="padding-bottom:15px">
+        <Button Color="ButtonColor.Success" @onclick="Collect">Подобрать</Button>
+    </div>
+    <div class="col-sm-3 d-grid" style="padding-bottom:15px">
+        <Button Color="ButtonColor.Danger" @onclick="Erase">Очистить</Button>
+    </div>
+</div>
+
+@code {
+    private Modal modal = default!;
+    private string char1 = "";
+    private string char2 = "";
+    private string char3 = "";
+    private string char4 = "";
+    private string char5 = "";
+    private string usedChars = "";
+    private string unUsedChars = "";
+    private List<string> words = new();
+    private string result = "";
+
+    private async Task OnShowModalClick() => await modal.ShowAsync();
+
+    private void Collect()
+    {
+        Words text = new Words();
+        words = text.words;
+        result = "";
+
+        if (char1 != "") words = words.Where(w => w[0] == Char.ToUpper(char1[0])).ToList();
+        if (char2 != "") words = words.Where(w => w[1] == Char.ToUpper(char2[0])).ToList();
+        if (char3 != "") words = words.Where(w => w[2] == Char.ToUpper(char3[0])).ToList();
+        if (char4 != "") words = words.Where(w => w[3] == Char.ToUpper(char4[0])).ToList();
+        if (char5 != "") words = words.Where(w => w[4] == Char.ToUpper(char5[0])).ToList();
+
+        if (usedChars != "")
+            foreach (char c in usedChars)
+                words = words.Where(w => w.Contains(Char.ToUpper(c))).ToList();
+
+        if (unUsedChars != "")
+            foreach (char c in unUsedChars)
+                words = words.Where(w => !w.Contains(Char.ToUpper(c))).ToList();
+
+        result = string.Join("\n", words);
+        OnShowModalClick();
+    }
+
+    private void Erase()
+    {
+        char1 = "";
+        char2 = "";
+        char3 = "";
+        char4 = "";
+        char5 = "";
+        usedChars = "";
+        unUsedChars = "";
+        Words text = new Words();
+        words = text.words;
+        result = "";
+    }
+}

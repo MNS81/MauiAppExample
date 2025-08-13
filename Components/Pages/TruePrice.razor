@@ -1,0 +1,105 @@
+﻿@page "/trueprice"
+@inject NavigationManager NavManager
+
+<style>
+    .custom-input {
+        font-size: 24px; /* размер шрифта */
+        font-weight: bold; /* жирность */
+    }
+</style>
+
+<Modal @ref="modal" Title=@title OnHidden="ModalClosed">
+    <BodyTemplate>
+        @((MarkupString)result.Replace("\n", "<br />"))
+    </BodyTemplate>
+</Modal>
+
+<h1 style="text-align:center">Честная цена</h1>
+<br />
+<NumberInput TValue="double?" @bind-Value="@weight" Placeholder="Вес в граммах" TextAlignment="Alignment.Center" class="form-control custom-input" />
+<br />
+<NumberInput TValue="double?" @bind-Value="@price" Placeholder="Цена" TextAlignment="Alignment.Center" class="form-control custom-input" />
+<br />
+<div class="row md-3">
+    <div class="col-sm-3 d-grid" style="padding-bottom:15px">
+        <Button Color="ButtonColor.Success" @onclick="SubmitForm">Посчитать</Button>
+    </div>
+    <div class="col-sm-3 d-grid" style="padding-bottom:15px">
+        <Button Color="ButtonColor.Info" @onclick="GetDataView">Список</Button>
+    </div>
+    <div class="col-sm-3 d-grid" style="padding-bottom:15px">
+        <Button Color="ButtonColor.Danger" @onclick="ResetForm">Сбросить</Button>
+    </div>
+</div>
+
+@code {
+    private Modal modal = default!;
+    private double? weight = null;
+    private double? price = null;
+    private string result = "";
+    private string title = "";
+    private List<Product> priceList = new ();
+
+    private void ResetForm()
+    {
+        ModalClosed();
+        priceList.Clear();
+    }
+
+    private async Task SubmitForm()
+    {
+        if (weight.HasValue && price.HasValue && weight.Value != 0)
+        {
+            title = "Результат";
+            double truePrice = Math.Round(price.Value / weight.Value * 1000, 2);
+            Product product = new Product
+            {
+                Weight = weight.Value,
+                Price = price.Value,
+                TruePrice = truePrice
+            };
+            priceList.Add(product);
+            result = $"Цена за килограмм: {truePrice} руб.";
+            modal.ShowAsync();
+        }
+        else
+        {
+            title = "Ошибка";
+            result = "Пожалуйста, введите корректные значения веса и цены.";
+            modal.ShowAsync();
+        }
+    }
+
+    private void GetDataView()
+    {
+        if (priceList.Count == 0)
+        {
+            title = "Ошибка";
+            result = "Нет данных для отображения.";
+            modal.ShowAsync();
+            return;
+        }
+        priceList = priceList.OrderBy(p => p.TruePrice).ToList();
+        result = String.Join("\n", priceList.Select(p => $"{p.Price} руб. за {p.Weight} гр. => {p.TruePrice} руб/кг"));
+        title = "Список товаров";
+        modal.ShowAsync();
+    }
+
+    private async Task OnShowModalClick() => await modal.ShowAsync();
+
+    private async Task ModalClosed()
+    {
+        weight = null;
+        price = null;
+        result = "";
+        title = "";
+        await InvokeAsync(StateHasChanged);
+    }
+
+    class Product
+    {
+        public double Weight { get; set; }
+        public double Price { get; set; }
+        public double TruePrice { get; set; }
+    }
+}
