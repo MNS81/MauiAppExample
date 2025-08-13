@@ -1,0 +1,36 @@
+name: Build and Release MAUI Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Install MAUI workloads
+      run: dotnet workload install maui maui-android
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build Android Release
+      run: dotnet publish -f net8.0-android -c Release -o output
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: output/*.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
