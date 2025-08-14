@@ -15,6 +15,9 @@
 </Modal>
 
 <h1 style="text-align:center">Wordle Helper</h1>
+<div class="text-center">
+    <Image Src="/images/cube.png" Class="rounded" Alt="placeholder" width="50" height="50"/>
+</div>
 <br />
 <h6 style="text-align:center">Буквы на своих местах</h6>
 <table style="margin: 0 auto">
@@ -26,11 +29,9 @@
         <td><TextInput @bind-Value="@char5" TextAlignment="Alignment.Center" Placeholder="*" MaxLength="1" class="form-control custom-input" /></td>
     </tr>
 </table>
-<br />
-<h6 style="text-align:center">Буквы, которые есть в слове</h6>
+<h6 style="text-align:center; margin-top:10px;">Буквы, которые есть в слове</h6>
 <TextInput @bind-Value="@usedChars" TextAlignment="Alignment.Center" class="form-control custom-input" />
-<br />
-<h6 style="text-align:center">Буквы, которых нет в слове</h6>
+<h6 style="text-align:center; margin-top:10px;">Буквы, которых нет в слове</h6>
 <TextInput @bind-Value="@unUsedChars" TextAlignment="Alignment.Center" class="form-control custom-input" />
 <br />
 
