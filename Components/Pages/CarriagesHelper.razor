@@ -1,0 +1,345 @@
+﻿@page "/carriageshelper"
+@using MySql.Data.MySqlClient
+
+<script>
+    function CheckInput(input) {
+        input.value = input.value.replace(/[^0-9]/g, '');
+    }
+</script>
+
+<style>
+    .small-text {
+        font-size: 12px;
+    }
+</style>
+
+<Modal @ref="modal" Title="Внимание!">
+    <BodyTemplate>
+        @modalText
+    </BodyTemplate>
+</Modal>
+
+<h1 style="text-align:center">Добавление вагонов</h1>
+<div class="text-center">
+    <Image Src="/Images/mine.png" Class="rounded" Alt="placeholder" width="50" height="50" />
+</div>
+<br />
+<Accordion>
+    <AccordionItem>
+        <TitleTemplate>
+            <Icon Name="IconName.FileTypePdf" Class="me-1" Size="IconSize.x4" /> XLS файл
+        </TitleTemplate>
+        <Content>
+            <TextAreaInput class="small-text" @bind-Value="@cement" Rows="3" MaxLength="10000" Placeholder="Сюда вставляем данные из .xls файла" />
+            <br />
+            <div class="row md-3">
+                <div class="col-sm-3 d-grid" style="padding-bottom:15px">
+                    <Button Color="ButtonColor.Success" @onclick="AddCement">Добавить</Button>
+                </div>
+                <div class="col-sm-3 d-grid" style="padding-bottom:15px">
+                    <Button Color="ButtonColor.Danger" @onclick="ResetCement">Очистить</Button>
+                </div>
+            </div>
+        </Content>
+    </AccordionItem>
+    <AccordionItem>
+        <TitleTemplate>
+            <Icon Name="IconName.FileTypeXls" Class="me-1" Size="IconSize.x4" /> PDF файл
+        </TitleTemplate>
+        <Content>
+            <div class="row md-3">
+                <div class="col-sm-3 d-grid" style="padding-bottom:15px">
+                    <RadioInput Name="EnableNotifications" Label="Гипс" @bind-Value="isGyps" />
+                </div>
+                <div class="col-sm-3 d-grid" style="padding-bottom:15px">
+                    <RadioInput Name="EnableNotifications" Label="Известь" @bind-Value="isIzvest" />
+                </div>
+                <div class="col-sm-3 d-grid" style="padding-bottom:15px">
+                    <RadioInput Name="EnableNotifications" Label="Цемент" @bind-Value="isCement" />
+                </div>
+                <div class="col-sm-3 d-grid" style="padding-bottom:15px">
+                    <DateInput TValue="DateOnly" @bind-Value="@date" Placeholder="Дата отгрузки" />
+                </div>
+                <hr />
+            </div>
+            <div class="row md-3">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align:center">№ вагона</th>
+                            <th style ="text-align:center">Вес</th>
+                            <th style="text-align:center">Груз</th>
+                            <th style="text-align:center">Дата отгрузки</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><TextInput @bind-Value="@n1" TextAlignment="Alignment.Center" MaxLength="8" oninput="CheckInput(this)" Placeholder="№ вагона"/></td>
+                            <td><NumberInput TValue="double" @bind-Value="@w1" Step="0.05" /></td>
+                            <td style="text-align:center">@cargo</td>
+                            <td style="text-align:center">@date</td>
+                        </tr>
+                        <tr>
+                            <td><TextInput @bind-Value="@n2" TextAlignment="Alignment.Center" MaxLength="8" oninput="CheckInput(this)" Placeholder="№ вагона" /></td>
+                            <td><NumberInput TValue="double" @bind-Value="@w2" Step="0.05" /></td>
+                            <td style="text-align:center">@cargo</td>
+                            <td style="text-align:center">@date</td>
+                        </tr>
+                        <tr>
+                            <td><TextInput @bind-Value="@n3" TextAlignment="Alignment.Center" MaxLength="8" oninput="CheckInput(this)" Placeholder="№ вагона" /></td>
+                            <td><NumberInput TValue="double" @bind-Value="@w3" Step="0.05" /></td>
+                            <td style="text-align:center">@cargo</td>
+                            <td style="text-align:center">@date</td>
+                        </tr>
+                        <tr>
+                            <td><TextInput @bind-Value="@n4" TextAlignment="Alignment.Center" MaxLength="8" oninput="CheckInput(this)" Placeholder="№ вагона" /></td>
+                            <td><NumberInput TValue="double" @bind-Value="@w4" Step="0.05" /></td>
+                            <td style="text-align:center">@cargo</td>
+                            <td style="text-align:center">@date</td>
+                        </tr>
+                        <tr>
+                            <td><TextInput @bind-Value="@n5" TextAlignment="Alignment.Center" MaxLength="8" oninput="CheckInput(this)" Placeholder="№ вагона" /></td>
+                            <td><NumberInput TValue="double" @bind-Value="@w5" Step="0.05" /></td>
+                            <td style="text-align:center">@cargo</td>
+                            <td style="text-align:center">@date</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <br />
+            <div class="row md-3">
+                <div class="col-sm-3 d-grid" style="padding-bottom:15px">
+                    <Button Color="ButtonColor.Success" @onclick="AddWagons">Добавить</Button>
+                </div>
+                <div class="col-sm-3 d-grid" style="padding-bottom:15px">
+                    <Button Color="ButtonColor.Danger" @onclick="ResetWagons">Очистить</Button>
+                </div>
+            </div>
+        </Content>
+    </AccordionItem>
+</Accordion>
+<br />
+<div class="row md-3">
+    <div class="col-sm-3 d-grid" style="padding-bottom:15px">
+        <Button Color="ButtonColor.Success" @onclick="UploadWagons">Отправить в БД</Button>
+    </div>
+    <div class="col-sm-3 d-grid" style="padding-bottom:15px">
+        <Button Color="ButtonColor.Danger" @onclick="ResetAll">Очистить всё</Button>
+    </div>
+</div>
+
+@code {
+    private Modal modal = default!;
+    private Services.DataBase db;
+    private bool isGyps = true;
+    private bool isIzvest = false;
+    private bool isCement = false;
+    private string? cement = null;
+    private List<Services.Carriage> carriages = new();
+    private DateOnly date = DateOnly.FromDateTime(DateTime.Now.AddDays(1));
+    private string modalText = "";
+    private string cargo => isGyps ? "Гипс" : isIzvest ? "Известь" : "Цемент";
+    private string? n1 = null;
+    private string? n2 = null;
+    private string? n3 = null;
+    private string? n4 = null;
+    private string? n5 = null;
+    private double w1 = 70.0;
+    private double w2 = 70.0;
+    private double w3 = 70.0;
+    private double w4 = 70.0;
+    private double w5 = 70.0;
+
+    private async Task OnShowModalClick() => await modal.ShowAsync();
+    private void AddCement()
+    {
+        if (string.IsNullOrWhiteSpace(cement))
+        {
+            modalText = "Нет информации для добавления!";
+            modal.ShowAsync();
+            return;
+        }
+        if (cement == "") return;
+        else
+        {
+            List<string> input = cement.TrimEnd().Split("\n").ToList();
+            for (int i = 0; i < input.Count; i++)
+            {
+                string[] temp = input[i].Split("\t");   // 0 - date, 2 - number, 7 - weight
+                Services.Carriage carriage = new();
+                carriage.Date = temp[0];
+                carriage.Team = "";
+                carriage.Number = temp[2];
+                carriage.Place = "";
+                carriage.Weight = temp[7];
+                carriage.Cargo = "Цемент";
+                carriage.State = "0";
+                carriages.Add(carriage);
+            }
+            ResetCement();
+            modalText = "Вагоны успешно добавлены в список на отправку!";
+            modal.ShowAsync();
+        }
+    }
+    private void AddWagons()
+    {
+        if (string.IsNullOrWhiteSpace(n1) && string.IsNullOrWhiteSpace(n2) && string.IsNullOrWhiteSpace(n3) && string.IsNullOrWhiteSpace(n4) && string.IsNullOrWhiteSpace(n5))
+        {
+            modalText = "Необходимо заполнить хотя бы один вагон!";
+            modal.ShowAsync();
+            return;
+        }
+        if (n1 != null && n1.Count() < 8)
+        {
+            modalText = "Проверьте номер первого вагона!";
+            modal.ShowAsync();
+            return;
+        }
+        if (n2 != null && n2.Count() < 8)
+        {
+            modalText = "Проверьте номер второго вагона!";
+            modal.ShowAsync();
+            return;
+        }
+        if (n3 != null && n3.Count() < 8)
+        {
+            modalText = "Проверьте номер третьего вагона!";
+            modal.ShowAsync();
+            return;
+        }
+        if (n4 != null && n4.Count() < 8)
+        {
+            modalText = "Проверьте номер четвертого вагона!";
+            modal.ShowAsync();
+            return;
+        }
+        if (n5 != null && n5.Count() < 8)
+        {
+            modalText = "Проверьте номер пятого вагона!";
+            modal.ShowAsync();
+            return;
+        }
+        if (n1 != null)
+        {
+            Services.Carriage carriage = new();
+            carriage.Date = date.ToString();
+            carriage.Team = "";
+            carriage.Number = n1;
+            carriage.Place = "";
+            carriage.Weight = w1.ToString();
+            carriage.Cargo = cargo;
+            carriage.State = "0";
+            carriages.Add(carriage);
+        }
+        if (n2 != null)
+        {
+            Services.Carriage carriage = new();
+            carriage.Date = date.ToString();
+            carriage.Team = "";
+            carriage.Number = n2;
+            carriage.Place = "";
+            carriage.Weight = w2.ToString();
+            carriage.Cargo = cargo;
+            carriage.State = "0";
+            carriages.Add(carriage);
+        }
+        if (n3 != null)
+        {
+            Services.Carriage carriage = new();
+            carriage.Date = date.ToString();
+            carriage.Team = "";
+            carriage.Number = n3;
+            carriage.Place = "";
+            carriage.Weight = w3.ToString();
+            carriage.Cargo = cargo;
+            carriage.State = "0";
+            carriages.Add(carriage);
+        }
+        if (n4 != null)
+        {
+            Services.Carriage carriage = new();
+            carriage.Date = date.ToString();
+            carriage.Team = "";
+            carriage.Number = n4;
+            carriage.Place = "";
+            carriage.Weight = w4.ToString();
+            carriage.Cargo = cargo;
+            carriage.State = "0";
+            carriages.Add(carriage);
+        }
+        if (n5 != null)
+        {
+            Services.Carriage carriage = new();
+            carriage.Date = date.ToString();
+            carriage.Team = "";
+            carriage.Number = n5;
+            carriage.Place = "";
+            carriage.Weight = w5.ToString();
+            carriage.Cargo = cargo;
+            carriage.State = "0";
+            carriages.Add(carriage);
+        }
+        ResetWagons();
+        modalText = "Вагоны успешно добавлены в список на отправку!";
+        modal.ShowAsync();
+    }
+    private void ResetCement() => cement = null;
+    private void ResetWagons()
+    {
+        n1 = null;
+        n2 = null;
+        n3 = null;
+        n4 = null;
+        n5 = null;
+        w1 = 70.0;
+        w2 = 70.0;
+        w3 = 70.0;
+        w4 = 70.0;
+        w5 = 70.0;
+    }
+    private void ResetAll()
+    {
+        ResetCement();
+        ResetWagons();
+        carriages.Clear();
+    }
+    private void UploadWagons()
+    {
+        if (carriages.Count == 0)
+        {
+            modalText = "Список на отправку пустой!";
+            modal.ShowAsync();
+            return;
+        }
+        foreach (var item in carriages)
+        {
+            db = new();
+            using (MySqlConnection connection = new MySqlConnection(db.conString))
+            {
+                connection.Open();
+                string sql = "insert into tsc (date, team, carriage, place, weight, cargo, state) values (@date, @team, @carriage, @place, @weight, @cargo, @state)";
+                using (MySqlCommand command = new MySqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@date", item.Date);
+                    command.Parameters.AddWithValue("@team", item.Team);
+                    command.Parameters.AddWithValue("@carriage", item.Number);
+                    command.Parameters.AddWithValue("@place", item.Place);
+                    command.Parameters.AddWithValue("@weight", item.Weight);
+                    command.Parameters.AddWithValue("@cargo", item.Cargo);
+                    command.Parameters.AddWithValue("@state", "0");
+                    if (command.ExecuteNonQuery() == 1)
+                    {
+                        Services.Telegram.SendMessageAsync($"{item.Date} добавлен вагон \n{item.Number} - {item.Cargo} ({item.Weight}тн.)");
+                    }
+                    else
+                    {
+                        modalText = $"Ошибка добавления вагона №{item.Number}!";
+                        modal.ShowAsync();
+                    }
+                }
+            }
+        }
+        modalText = "Вагоны успешно загружены в базу";
+        modal.ShowAsync();
+    }
+}
