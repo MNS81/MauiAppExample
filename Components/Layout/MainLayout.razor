@@ -1,41 +1,27 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager NavManager
 
-<BlazorBootstrapLayout StickyHeader="true">
-    <SidebarSection>
-        <Sidebar2 Href="/"
-                  IconName="IconName.Tools"
-                  Title="MNS81 Utils"
-                  BadgeText="1.0.3"
-                  DataProvider="Sidebar2DataProvider"
-                  WidthUnit="Unit.Px" />
-    </SidebarSection>
-    <ContentSection>
+<div class="app d-flex flex-column vh-100">
+
+    <!-- Шапка как ссылка -->
+    <header class="bg-secondary shadow d-flex align-items-center px-3"
+            style="height: 56px; cursor: pointer;"
+            @onclick='() => NavManager.NavigateTo("/")'>
+        <span class="fw-bold text-white">
+            <Icon Name="IconName.Tools" Size="IconSize.x5" />
+        </span>
+        <span class="fw-bold text-white">&nbsp;&nbsp;&nbsp;MNS81 Utils&nbsp;</span>
+        <span class="badge bg-light text-dark ms-2">1.0.3</span>
+    </header>
+
+    <!-- Контент -->
+    <main class="flex-grow-1" style="margin-left:20px; margin-right:20px">
+        <br /><br />
         @Body
-    </ContentSection>
-</BlazorBootstrapLayout>
+    </main>
 
-@code {
-    private IEnumerable<NavItem> navItems = default!;
-
-    private async Task<Sidebar2DataProviderResult> Sidebar2DataProvider(Sidebar2DataProviderRequest request)
-    {
-        if (navItems is null)
-            navItems = GetNavItems();
-
-        var filtered = navItems.Where(x => x.Id != "1");
-        return await Task.FromResult(request.ApplyTo(filtered));
-    }
-
-    private IEnumerable<NavItem> GetNavItems()
-    {
-        navItems = new List<NavItem>
-        {
-            new NavItem { Id = "1", Href = "/", IconName = IconName.InfoCircle, Text = "About", Match=NavLinkMatch.All},
-            new NavItem { Id = "2", Href = "/carriageshelper", IconName = IconName.MinecartLoaded, Text = "Carriages Helper"},
-            new NavItem { Id = "3", Href = "/wordlehelper", IconName = IconName.AlphabetUppercase, Text = "Wordle Helper"},
-            new NavItem { Id = "4", Href = "/trueprice", IconName = IconName.Cart4, Text = "True Price"},            
-        };
-
-        return navItems;
-    }
-}
+    <!-- Футер -->
+    <footer class="bg-light text-center py-2 border-top" style="height: 40px;">
+        <small class="text-muted">© 2025 MNS81</small>
+    </footer>
+</div>
